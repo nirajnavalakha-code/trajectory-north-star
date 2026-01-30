@@ -83,6 +83,209 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_path_items: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          item_type: string
+          knowledge_item_id: string | null
+          mastery_contribution: number
+          notes: string | null
+          order_index: number
+          path_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          item_type?: string
+          knowledge_item_id?: string | null
+          mastery_contribution?: number
+          notes?: string | null
+          order_index: number
+          path_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          item_type?: string
+          knowledge_item_id?: string | null
+          mastery_contribution?: number
+          notes?: string | null
+          order_index?: number
+          path_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_path_items_knowledge_item_id_fkey"
+            columns: ["knowledge_item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_path_items_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_paths: {
+        Row: {
+          completed_items: number
+          created_at: string
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          skill_id: string
+          status: string
+          title: string
+          total_items: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_items?: number
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          skill_id: string
+          status?: string
+          title: string
+          total_items?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_items?: number
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          skill_id?: string
+          status?: string
+          title?: string
+          total_items?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_paths_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_applications: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          mastery_gained: number
+          mission_id: string | null
+          outcome: string | null
+          path_item_id: string | null
+          skill_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          mastery_gained?: number
+          mission_id?: string | null
+          outcome?: string | null
+          path_item_id?: string | null
+          skill_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          mastery_gained?: number
+          mission_id?: string | null
+          outcome?: string | null
+          path_item_id?: string | null
+          skill_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_applications_path_item_id_fkey"
+            columns: ["path_item_id"]
+            isOneToOne: false
+            referencedRelation: "learning_path_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_applications_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skills: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          mastery_level: number
+          name: string
+          target_mastery: number
+          total_learning_time_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mastery_level?: number
+          name: string
+          target_mastery?: number
+          total_learning_time_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mastery_level?: number
+          name?: string
+          target_mastery?: number
+          total_learning_time_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
