@@ -21,6 +21,7 @@ import {
 } from "@/types/knowledge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useKnowledgeProcessor } from "@/hooks/useKnowledgeProcessor";
 
 interface KnowledgeWorkspaceProps {
   onBack: () => void;
@@ -36,6 +37,7 @@ export const KnowledgeWorkspace = ({ onBack, className }: KnowledgeWorkspaceProp
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { processAndNotify, isProcessing } = useKnowledgeProcessor();
 
   // Check auth and load items
   useEffect(() => {
@@ -116,15 +118,41 @@ export const KnowledgeWorkspace = ({ onBack, className }: KnowledgeWorkspaceProp
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      setItems((prev) => [inserted as KnowledgeItem, ...prev]);
-      toast({
-        title: "Item saved",
-        description: "AI will process and prioritize this soon.",
-      });
+      setIsDumping(false);
+      return;
     }
 
+    const savedItem = inserted as KnowledgeItem;
+    setItems((prev) => [savedItem, ...prev]);
+    toast({
+      title: "Item saved",
+      description: "AI is processing and prioritizing...",
+    });
+
     setIsDumping(false);
+
+    // Trigger AI processing in background
+    processAndNotify(savedItem, (analysis) => {
+      // Update local state with the AI analysis
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === savedItem.id
+            ? {
+                ...item,
+                extracted_insights: analysis?.extracted_insights ?? null,
+                tagged_skills: analysis?.tagged_skills ?? null,
+                difficulty: (analysis?.difficulty as KnowledgeItem["difficulty"]) ?? null,
+                estimated_read_time: analysis?.estimated_read_time ?? null,
+                priority: (analysis?.priority as KnowledgePriority) ?? "later",
+                priority_reason: analysis?.priority_reason ?? null,
+                relevance_score: analysis?.relevance_score ?? null,
+                title: analysis?.generated_title || item.title,
+                is_processed: true,
+              }
+            : item
+        )
+      );
+    });
   };
 
   const handleMarkConsumed = async (id: string) => {
@@ -269,6 +297,7 @@ export const KnowledgeWorkspace = ({ onBack, className }: KnowledgeWorkspaceProp
                 onMarkConsumed={handleMarkConsumed}
                 onChangePriority={handleChangePriority}
                 onDelete={handleDelete}
+                isAiProcessing={isProcessing(item.id)}
               />
             ))}
           </div>
