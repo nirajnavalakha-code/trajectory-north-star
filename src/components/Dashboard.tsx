@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TrajectoryLogo } from "./TrajectoryLogo";
 import { DailyGreeting } from "./DailyGreeting";
 import { NorthStarCard } from "./NorthStarCard";
 import { TrajectoryVisualization } from "./TrajectoryVisualization";
 import { MissionCard } from "./MissionCard";
 import { VelocityIndicator } from "./VelocityIndicator";
+import { VelocityPanel } from "./VelocityPanel";
 import { RoadmapView } from "./RoadmapView";
 import { Button } from "./ui/button";
-import { Settings, Bell, LogOut, Map } from "lucide-react";
-
+import { Settings, Bell, LogOut, Map, Activity } from "lucide-react";
+import { createSampleMissions } from "@/data/sampleMissions";
+import { useVelocity } from "@/hooks/useVelocity";
+import { format, addMonths } from "date-fns";
 interface DashboardProps {
   onLogout: () => void;
   userData: {
@@ -19,10 +22,21 @@ interface DashboardProps {
   };
 }
 
-type DashboardView = "main" | "roadmap";
+type DashboardView = "main" | "roadmap" | "velocity";
 
 export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
   const [view, setView] = useState<DashboardView>("main");
+  
+  // Generate missions based on user's identity
+  const missionHierarchy = useMemo(() => createSampleMissions(userData.identity), [userData.identity]);
+  
+  // Calculate velocity metrics
+  const startDate = useMemo(() => format(addMonths(new Date(), -3), "yyyy-MM-dd"), []);
+  const { metrics: velocityMetrics, summary: velocitySummary } = useVelocity({
+    hierarchy: missionHierarchy,
+    targetDate: userData.targetDate || format(addMonths(new Date(), 9), "yyyy-MM-dd"),
+    startDate,
+  });
   const [missions, setMissions] = useState([
     {
       id: "1",
@@ -63,11 +77,41 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
   };
 
   const completedCount = missions.filter((m) => m.isCompleted).length;
-  const progress = 34; // Example progress
 
   // Show Roadmap View
   if (view === "roadmap") {
     return <RoadmapView userData={userData} onBack={() => setView("main")} />;
+  }
+
+  // Show Velocity View
+  if (view === "velocity") {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="fixed inset-0 bg-trajectory-radial pointer-events-none opacity-30" />
+        <header className="relative z-10 border-b border-border bg-background/80 backdrop-blur-sm">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <TrajectoryLogo size="sm" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("main")}
+              className="text-muted-foreground"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+        </header>
+        <main className="relative z-10 max-w-4xl mx-auto px-6 py-8">
+          <div className="mb-8">
+            <h1 className="font-display text-3xl font-bold mb-2">Velocity & Reality Engine</h1>
+            <p className="text-muted-foreground">
+              Truth over comfort. Here's exactly where you stand.
+            </p>
+          </div>
+          <VelocityPanel metrics={velocityMetrics} />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -81,6 +125,15 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
           <TrajectoryLogo size="sm" />
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("velocity")}
+              className="text-muted-foreground gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Velocity</span>
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -119,39 +172,67 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
             identity={userData.identity}
             targetDate={userData.targetDate}
             context={userData.context}
-            daysRemaining={287}
-            velocity="on-track"
+            daysRemaining={velocityMetrics.daysOffset > 0 ? velocityMetrics.daysOffset : 287}
+            velocity={velocityMetrics.status}
           />
 
-          <div className="p-6 rounded-2xl border border-border bg-card">
+          <button
+            onClick={() => setView("velocity")}
+            className="p-6 rounded-2xl border border-border bg-card hover:border-accent/30 transition-all text-left group"
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-semibold">Your Trajectory</h3>
-              <VelocityIndicator status="on-track" showLabel={false} />
+              <VelocityIndicator status={velocityMetrics.status} days={velocityMetrics.daysOffset} showLabel={true} />
             </div>
-            <TrajectoryVisualization progress={progress} />
-          </div>
+            <TrajectoryVisualization progress={velocityMetrics.actualProgress} />
+            <p className="text-sm text-muted-foreground mt-4 group-hover:text-foreground transition-colors">
+              Click to view detailed velocity analysis →
+            </p>
+          </button>
         </div>
 
-        {/* Quick Access to Roadmap */}
-        <button
-          onClick={() => setView("roadmap")}
-          className="w-full p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
-                <Map className="w-5 h-5" />
+        {/* Quick Access Cards */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <button
+            onClick={() => setView("velocity")}
+            className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Velocity Engine</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {velocitySummary}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium">View Full Mission Roadmap</h3>
-                <p className="text-sm text-muted-foreground">
-                  See yearly → quarterly → monthly → weekly → daily mission hierarchy
-                </p>
-              </div>
+              <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
             </div>
-            <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
-          </div>
-        </button>
+          </button>
+
+          <button
+            onClick={() => setView("roadmap")}
+            className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                  <Map className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Mission Roadmap</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Yearly → Daily mission hierarchy
+                  </p>
+                </div>
+              </div>
+              <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
+            </div>
+          </button>
+        </div>
 
         {/* Today's Missions */}
         <div className="space-y-4">
