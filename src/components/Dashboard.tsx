@@ -5,8 +5,9 @@ import { NorthStarCard } from "./NorthStarCard";
 import { TrajectoryVisualization } from "./TrajectoryVisualization";
 import { MissionCard } from "./MissionCard";
 import { VelocityIndicator } from "./VelocityIndicator";
+import { RoadmapView } from "./RoadmapView";
 import { Button } from "./ui/button";
-import { Settings, Bell, LogOut } from "lucide-react";
+import { Settings, Bell, LogOut, Map } from "lucide-react";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -18,7 +19,10 @@ interface DashboardProps {
   };
 }
 
+type DashboardView = "main" | "roadmap";
+
 export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
+  const [view, setView] = useState<DashboardView>("main");
   const [missions, setMissions] = useState([
     {
       id: "1",
@@ -61,6 +65,11 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
   const completedCount = missions.filter((m) => m.isCompleted).length;
   const progress = 34; // Example progress
 
+  // Show Roadmap View
+  if (view === "roadmap") {
+    return <RoadmapView userData={userData} onBack={() => setView("main")} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Background */}
@@ -72,6 +81,15 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
           <TrajectoryLogo size="sm" />
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("roadmap")}
+              className="text-muted-foreground gap-2"
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Roadmap</span>
+            </Button>
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <Bell className="w-5 h-5" />
             </Button>
@@ -113,6 +131,27 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
             <TrajectoryVisualization progress={progress} />
           </div>
         </div>
+
+        {/* Quick Access to Roadmap */}
+        <button
+          onClick={() => setView("roadmap")}
+          className="w-full p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <Map className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-medium">View Full Mission Roadmap</h3>
+                <p className="text-sm text-muted-foreground">
+                  See yearly → quarterly → monthly → weekly → daily mission hierarchy
+                </p>
+              </div>
+            </div>
+            <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
+          </div>
+        </button>
 
         {/* Today's Missions */}
         <div className="space-y-4">
