@@ -28,6 +28,7 @@ interface KnowledgeItemCardProps {
   onMarkConsumed?: (id: string) => void;
   onChangePriority?: (id: string, priority: KnowledgePriority) => void;
   onDelete?: (id: string) => void;
+  isAiProcessing?: boolean;
   className?: string;
 }
 
@@ -51,10 +52,11 @@ export const KnowledgeItemCard = ({
   onMarkConsumed,
   onChangePriority,
   onDelete,
+  isAiProcessing = false,
   className,
 }: KnowledgeItemCardProps) => {
   const displayTitle = item.title || item.url || "Untitled";
-  const isProcessing = !item.is_processed;
+  const isProcessing = !item.is_processed || isAiProcessing;
 
   return (
     <div
