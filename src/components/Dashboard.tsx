@@ -9,12 +9,14 @@ import { VelocityPanel } from "./VelocityPanel";
 import { RoadmapView } from "./RoadmapView";
 import { MorningCheckIn } from "./MorningCheckIn";
 import { EveningWrapUp } from "./EveningWrapUp";
+import { KnowledgeWorkspace } from "./knowledge/KnowledgeWorkspace";
 import { Button } from "./ui/button";
-import { Settings, Bell, LogOut, Map, Activity, Sun, Moon } from "lucide-react";
+import { Settings, Bell, LogOut, Map, Activity, Sun, Moon, BookOpen } from "lucide-react";
 import { createSampleMissions } from "@/data/sampleMissions";
 import { useVelocity } from "@/hooks/useVelocity";
 import { useDailyLoop } from "@/hooks/useDailyLoop";
 import { format, addMonths } from "date-fns";
+
 interface DashboardProps {
   onLogout: () => void;
   userData: {
@@ -25,7 +27,7 @@ interface DashboardProps {
   };
 }
 
-type DashboardView = "main" | "roadmap" | "velocity";
+type DashboardView = "main" | "roadmap" | "velocity" | "knowledge";
 
 export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
   const [view, setView] = useState<DashboardView>("main");
@@ -94,6 +96,11 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
   // Show Roadmap View
   if (view === "roadmap") {
     return <RoadmapView userData={userData} onBack={() => setView("main")} />;
+  }
+
+  // Show Knowledge Workspace
+  if (view === "knowledge") {
+    return <KnowledgeWorkspace onBack={() => setView("main")} />;
   }
 
   // Show Velocity View
@@ -262,7 +269,7 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
         </div>
 
         {/* Quick Access Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <button
             onClick={triggerMorning}
             className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
@@ -298,6 +305,23 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
           </button>
 
           <button
+            onClick={() => setView("knowledge")}
+            className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-medium">Knowledge</h3>
+                <p className="text-sm text-muted-foreground">
+                  Dump & learn
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <button
             onClick={() => setView("velocity")}
             className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
           >
@@ -306,8 +330,8 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
                 <Activity className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-medium">Velocity Engine</h3>
-                <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                <h3 className="font-medium">Velocity</h3>
+                <p className="text-sm text-muted-foreground truncate max-w-[120px]">
                   {velocitySummary.split(".")[0]}
                 </p>
               </div>
@@ -323,7 +347,7 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
                 <Map className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-medium">Mission Roadmap</h3>
+                <h3 className="font-medium">Roadmap</h3>
                 <p className="text-sm text-muted-foreground">
                   Full hierarchy
                 </p>

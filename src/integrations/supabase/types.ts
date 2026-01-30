@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      knowledge_items: {
+        Row: {
+          consumed_at: string | null
+          content: string | null
+          created_at: string
+          difficulty: string | null
+          estimated_read_time: string | null
+          extracted_insights: string[] | null
+          id: string
+          is_consumed: boolean
+          is_processed: boolean
+          priority: string
+          priority_reason: string | null
+          relevance_score: number | null
+          source_domain: string | null
+          tagged_skills: string[] | null
+          thumbnail_url: string | null
+          title: string | null
+          type: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          content?: string | null
+          created_at?: string
+          difficulty?: string | null
+          estimated_read_time?: string | null
+          extracted_insights?: string[] | null
+          id?: string
+          is_consumed?: boolean
+          is_processed?: boolean
+          priority?: string
+          priority_reason?: string | null
+          relevance_score?: number | null
+          source_domain?: string | null
+          tagged_skills?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          content?: string | null
+          created_at?: string
+          difficulty?: string | null
+          estimated_read_time?: string | null
+          extracted_insights?: string[] | null
+          id?: string
+          is_consumed?: boolean
+          is_processed?: boolean
+          priority?: string
+          priority_reason?: string | null
+          relevance_score?: number | null
+          source_domain?: string | null
+          tagged_skills?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
