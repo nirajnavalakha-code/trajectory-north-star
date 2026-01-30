@@ -7,10 +7,13 @@ import { MissionCard } from "./MissionCard";
 import { VelocityIndicator } from "./VelocityIndicator";
 import { VelocityPanel } from "./VelocityPanel";
 import { RoadmapView } from "./RoadmapView";
+import { MorningCheckIn } from "./MorningCheckIn";
+import { EveningWrapUp } from "./EveningWrapUp";
 import { Button } from "./ui/button";
-import { Settings, Bell, LogOut, Map, Activity } from "lucide-react";
+import { Settings, Bell, LogOut, Map, Activity, Sun, Moon } from "lucide-react";
 import { createSampleMissions } from "@/data/sampleMissions";
 import { useVelocity } from "@/hooks/useVelocity";
+import { useDailyLoop } from "@/hooks/useDailyLoop";
 import { format, addMonths } from "date-fns";
 interface DashboardProps {
   onLogout: () => void;
@@ -37,6 +40,16 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
     targetDate: userData.targetDate || format(addMonths(new Date(), 9), "yyyy-MM-dd"),
     startDate,
   });
+
+  // Daily engagement loop
+  const {
+    shouldShowMorning,
+    shouldShowEvening,
+    dismissMorning,
+    dismissEvening,
+    triggerMorning,
+    triggerEvening,
+  } = useDailyLoop({ enabled: true });
   const [missions, setMissions] = useState([
     {
       id: "1",
@@ -114,8 +127,65 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
     );
   }
 
+  // Prepare data for morning check-in
+  const morningMissions = missions.map(m => ({
+    id: m.id,
+    title: m.title,
+    duration: m.duration,
+    impact: m.impact === "high" ? "critical" as const : m.impact,
+    whyNow: m.description.split(".")[0] + ".",
+  }));
+
+  const trajectoryLink = `Today's focus directly builds your path to becoming a ${userData.identity}. Each mission compounds toward your goal.`;
+
+  // Prepare data for evening wrap-up
+  const completedMissions = missions.filter(m => m.isCompleted).map(m => ({
+    id: m.id,
+    title: m.title,
+    duration: m.duration,
+  }));
+
+  const slippedMissions = missions.filter(m => !m.isCompleted).map(m => ({
+    id: m.id,
+    title: m.title,
+    rescheduledTo: "tomorrow" as const,
+  }));
+
+  const tomorrowMissions = [
+    ...slippedMissions.map(m => ({ id: m.id, title: m.title, duration: "TBD", isCarryOver: true })),
+    { id: "new1", title: "Continue building toward trajectory", duration: "2 hours", isCarryOver: false },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Morning Check-In Modal */}
+      {shouldShowMorning && (
+        <MorningCheckIn
+          userName="there"
+          identity={userData.identity}
+          missions={morningMissions}
+          totalEffort="3 hours 5 min"
+          trajectoryLink={trajectoryLink}
+          onStart={dismissMorning}
+          onDismiss={dismissMorning}
+        />
+      )}
+
+      {/* Evening Wrap-Up Modal */}
+      {shouldShowEvening && (
+        <EveningWrapUp
+          userName="there"
+          identity={userData.identity}
+          completedMissions={completedMissions}
+          slippedMissions={slippedMissions}
+          tomorrowMissions={tomorrowMissions}
+          velocityStatus={velocityMetrics.status}
+          velocityChange={completedMissions.length > 0 ? 2 : -3}
+          daysOffset={velocityMetrics.daysOffset}
+          onClose={dismissEvening}
+        />
+      )}
+
       {/* Background */}
       <div className="fixed inset-0 bg-trajectory-radial pointer-events-none opacity-30" />
 
@@ -192,24 +262,55 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
         </div>
 
         {/* Quick Access Cards */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button
+            onClick={triggerMorning}
+            className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <Sun className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-medium">Morning Brief</h3>
+                <p className="text-sm text-muted-foreground">
+                  Start your day
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={triggerEvening}
+            className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <Moon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-medium">Evening Wrap</h3>
+                <p className="text-sm text-muted-foreground">
+                  Review & plan
+                </p>
+              </div>
+            </div>
+          </button>
+
           <button
             onClick={() => setView("velocity")}
             className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Velocity Engine</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {velocitySummary}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <Activity className="w-5 h-5" />
               </div>
-              <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
+              <div>
+                <h3 className="font-medium">Velocity Engine</h3>
+                <p className="text-sm text-muted-foreground truncate max-w-[150px]">
+                  {velocitySummary.split(".")[0]}
+                </p>
+              </div>
             </div>
           </button>
 
@@ -217,19 +318,16 @@ export const Dashboard = ({ onLogout, userData }: DashboardProps) => {
             onClick={() => setView("roadmap")}
             className="p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-accent/30 transition-all group text-left"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
-                  <Map className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Mission Roadmap</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Yearly → Daily mission hierarchy
-                  </p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 transition-colors">
+                <Map className="w-5 h-5" />
               </div>
-              <span className="text-muted-foreground group-hover:text-accent transition-colors">→</span>
+              <div>
+                <h3 className="font-medium">Mission Roadmap</h3>
+                <p className="text-sm text-muted-foreground">
+                  Full hierarchy
+                </p>
+              </div>
             </div>
           </button>
         </div>
